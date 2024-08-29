@@ -13,7 +13,7 @@ GROUP BY customer_id;
 |B          |74 |
 |C          |36 |
 |A          |76 |
-
+---
 #### 2. How many days has each customer visited the restaurant?
 ```
 SELECT customer_id, COUNT(DISTINCT(order_date)) AS days_visited
@@ -26,7 +26,7 @@ GROUP BY customer_id;
 |A|4|
 |B|6|
 |C|2|
-
+---
 #### 3. What was the first item from the menu purchased by each customer?
 ```
 WITH sales_ordered AS (
@@ -51,7 +51,7 @@ GROUP BY customer_id, product_name;
 |A|sushi|
 |B|curry|
 |C|ramen|
-
+---
 #### 4. What is the most purchased item on the menu and how many times was it purchased by all customers?
 ```
 SELECT COUNT(s.product_id) AS purchases, product_name
@@ -65,7 +65,7 @@ LIMIT 1;
 |purchases|product_name|
 |-|-|
 |8|ramen|
-
+---
 #### 5. Which item was the most popular for each customer?
 ```
 WITH top_item AS(
@@ -91,7 +91,7 @@ WHERE rank = 1;
 |B|curry|2|
 |B|ramen|2|
 |C|ramen|3|
-
+---
 #### 6. Which item was purchased first by the customer after they became a member?
 ```
 WITH first_purchase AS (
@@ -116,7 +116,7 @@ WHERE ranking = 1;
 |-|-|
 |A|ramen|
 |B|sushi|
-
+---
 #### 7. Which item was purchased just before the customer became a member?
 ```
 WITH items_purchased_before AS (
@@ -142,7 +142,7 @@ WHERE ranking = 1;
 |-|-|
 |A|sushi|
 |B|sushi|
-
+---
 #### 8. What is the total items and amount spent for each member before they became a member?
 ```
 SELECT s.customer_id, COUNT(product_name) AS items, SUM(price) AS amount_spent
@@ -160,7 +160,7 @@ ORDER BY s.customer_id;
 |-|-|-|
 |A|2|25|
 |B|3|40|
-
+---
 #### 9. If each $1 spent equates to 10 points and sushi has a 2x points multiplier - how many points would each customer have?
 ```
 WITH points AS (
@@ -185,7 +185,7 @@ ORDER BY customer_id;
 |A|860|
 |B|940|
 |C|360|
-
+---
 #### 10. In the first week after a customer joins the program (including their join date) they earn 2x points on all items, not just sushi - how many points do customer A and B have at the end of January?
 ```
 WITH points_january AS (
@@ -213,3 +213,48 @@ ORDER BY customer_id;
 |-|-|
 |A|1370|
 |B|820|
+---
+# BONUS QUESTIONS
+The following questions are related creating basic data tables that Danny and his team can use to quickly derive insights without needing to join the underlying tables using SQL.
+
+Recreate the following table output using the available data:
+```
+SELECT s.customer_id, order_date, product_name, price,
+CASE
+	WHEN order_date >= join_date THEN 'Y'
+	ELSE 'N'
+END AS member
+FROM sales s
+INNER JOIN menu mu
+ON s.product_id = mu.product_id
+LEFT JOIN members m
+ON s.customer_id = m.customer_id
+ORDER BY customer_id, order_date;
+```
+---
+Danny also requires further information about the ranking of customer products, but he purposely does not need the ranking for non-member purchases so he expects null ranking values for the records when customers are not yet part of the loyalty program.
+```
+WITH customer_data AS (
+	SELECT s.customer_id, order_date, product_name, price,
+	CASE
+		WHEN order_date >= join_date THEN 'Y'
+		ELSE 'N'
+	END AS member
+	FROM sales s
+	INNER JOIN menu mu
+	ON s.product_id = mu.product_id
+	LEFT JOIN members m
+	ON s.customer_id = m.customer_id
+	ORDER BY customer_id, order_date
+)
+
+SELECT *,
+CASE
+	WHEN member = 'N' THEN NULL
+	ELSE RANK() OVER(
+	PARTITION BY customer_id, member
+	ORDER BY order_date
+	)
+END AS ranking
+FROM customer_data
+```
