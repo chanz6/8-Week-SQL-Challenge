@@ -5,14 +5,15 @@ SELECT customer_id, SUM(m.price) AS total_sales
 FROM sales s
 INNER JOIN menu m
 ON s.product_id = m.product_id
-GROUP BY customer_id;
+GROUP BY customer_id
+ORDER BY customer_id;
 ```
 #### Output:
 |customer_id|total_sales|
 |-----------|---|
+|A          |76 |
 |B          |74 |
 |C          |36 |
-|A          |76 |
 ---
 #### 2. How many days has each customer visited the restaurant?
 ```
