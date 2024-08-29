@@ -91,3 +91,28 @@ WHERE rank = 1;
 |B|curry|2|
 |B|ramen|2|
 |C|ramen|3|
+
+#### 6. Which item was purchased first by the customer after they became a member?
+```
+WITH first_purchase AS (
+	SELECT s.customer_id, product_name, RANK() OVER(
+		PARTITION BY s.customer_id
+		ORDER BY order_date
+	) AS ranking
+	FROM sales s
+	INNER JOIN members m
+	ON s.customer_id = m.customer_id
+	INNER JOIN menu mu
+	ON s.product_id = mu.product_id
+	WHERE order_date > join_date
+)
+
+SELECT customer_id, product_name
+FROM first_purchase
+WHERE ranking = 1
+```
+#### Output:
+|customer_id|product_name|
+|-|-|
+|A|ramen|
+|B|sushi|
