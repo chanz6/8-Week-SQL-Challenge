@@ -109,7 +109,7 @@ WITH first_purchase AS (
 
 SELECT customer_id, product_name
 FROM first_purchase
-WHERE ranking = 1
+WHERE ranking = 1;
 ```
 #### Output:
 |customer_id|product_name|
@@ -185,3 +185,31 @@ ORDER BY customer_id;
 |A|860|
 |B|940|
 |C|360|
+
+#### 10. In the first week after a customer joins the program (including their join date) they earn 2x points on all items, not just sushi - how many points do customer A and B have at the end of January?
+```
+WITH points_january AS (
+	SELECT s.customer_id,
+	CASE
+		WHEN order_date BETWEEN join_date AND join_date+6 THEN price*20
+		WHEN order_date NOT BETWEEN join_date AND join_date+6 AND product_name = 'sushi' THEN price*20
+		ELSE price*10
+	END AS points
+	FROM sales s
+	INNER JOIN members m
+	ON s.customer_id = m.customer_id
+	INNER JOIN menu mu
+	ON s.product_id = mu.product_id
+	WHERE EXTRACT(MONTH FROM order_date) = 01
+)
+
+SELECT customer_id, SUM(points) AS total_points
+FROM points_january
+GROUP BY customer_id
+ORDER BY customer_id;
+```
+#### Output:
+|customer_id|total_points|
+|-|-|
+|A|1370|
+|B|820|
