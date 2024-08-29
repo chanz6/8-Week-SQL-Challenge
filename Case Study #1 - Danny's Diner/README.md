@@ -65,3 +65,29 @@ LIMIT 1;
 |purchases|product_name|
 |-|-|
 |8|ramen|
+
+#### 5. Which item was the most popular for each customer?
+```
+WITH top_item AS(
+	SELECT customer_id, product_name, COUNT(s.product_id) AS purchase_count, RANK() OVER(
+		PARTITION BY customer_id
+		ORDER BY COUNT(s.product_id) DESC
+	)
+	FROM sales s
+	INNER JOIN menu m
+	ON s.product_id = m.product_id
+	GROUP BY customer_id, product_name
+)
+
+SELECT customer_id, product_name, purchase_count
+FROM top_item
+WHERE rank = 1;
+```
+#### Output:
+|customer_id|product_name|purchase_count|
+|-|-|-|
+|A|ramen|3|
+|B|sushi|2|
+|B|curry|2|
+|B|ramen|2|
+|C|ramen|3|
