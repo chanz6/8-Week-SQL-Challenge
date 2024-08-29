@@ -116,3 +116,29 @@ WHERE ranking = 1
 |-|-|
 |A|ramen|
 |B|sushi|
+
+#### 7. Which item was purchased just before the customer became a member?
+```
+WITH items_purchased_before AS (
+	SELECT s.customer_id, order_date, product_name, ROW_NUMBER() OVER(
+		PARTITION BY s.customer_id
+		ORDER BY order_date DESC
+	) AS ranking
+	FROM sales s
+	JOIN members m
+	ON s.customer_id = m.customer_id
+	JOIN menu mu
+	ON s.product_id = mu.product_id
+	WHERE order_date < join_date
+	ORDER BY customer_id, order_date
+)
+
+SELECT customer_id, product_name
+FROM items_purchased_before
+WHERE ranking = 1;
+```
+#### Output:
+|customer_id|product_name|
+|-|-|
+|A|sushi|
+|B|sushi|
